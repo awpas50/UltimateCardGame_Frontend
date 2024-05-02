@@ -8,25 +8,15 @@ export default class SocketHandler {
         //scene.socket = io('http://localhost:3000/');
 
         //Create or join a room
-        // function generateRoomId() {
-        //     const timestamp = Date.now().toString();
-        //     const randomNum = Math.floor(Math.random() * 1000).toString();
-        //     return `${timestamp}_${randomNum}`;
-        // }
-        // const roomId = generateRoomId(); 
-
-        //socket.emit('createRoom', roomId);
-
         scene.socket.on('connect', () => {
             console.log('Connected!');
             scene.socket.emit('HelloWorld');
-            //scene.socket.emit('dealDeck', scene.socket.id);
         });
 
         //Called in server.js (socket.emit)
-        scene.socket.on('buildPlayerTurnText', () => {
-            scene.UIHandler.buildPlayerTurnText(); 
-        })
+        // scene.socket.on('buildPlayerTurnText', () => {
+        //     scene.UIHandler.buildPlayerTurnText(); 
+        // })
         //Called in server.js (socket.emit)
         scene.socket.on('setPlayerTurnText', () => {
             let b = scene.GameHandler.getCurrentTurn();
@@ -43,17 +33,23 @@ export default class SocketHandler {
             scene.UIHandler.setPlayerPointText(points); 
         })
 
+        scene.socket.on('playersInRoom', (players) => {
+            console.log('Players in the room:', players);
+            scene.GameHandler.currentPlayersInRoom = players;
+            scene.GameHandler.opponentID = players.filter(player => player !== scene.socket.id);
+            console.log('opponentID:', scene.GameHandler.opponentID);
+        });
+
         //Called in server.js (socket.emit)
         scene.socket.on('buildPlayerNumberText', (playerNumber) => {
             scene.UIHandler.buildPlayerNumberText(playerNumber);
         })
-        //Called in server.js (io.emit)
+        //Called in server.js (io.to(roomId).emit)
         scene.socket.on('firstTurn', () => {
             scene.GameHandler.changeTurn();
             scene.GameHandler.getCurrentTurn();
         })
 
-        // Called after socket.on('dealDeck') or socket.on('dealCards') in server.js
         scene.socket.on('changeGameState', (gameState) => {
             scene.GameHandler.changeGameState(gameState);
             if (gameState === "Initializing") {
@@ -93,6 +89,20 @@ export default class SocketHandler {
                 scene.DeckHandler.InstantiateCard(189, 585, "WCard", card, "authorCard").setScale(0.26, 0.26); //Player side
             } else {
                 scene.DeckHandler.InstantiateCard(189, 230, "WCard", card, "authorCard").setScale(0.26, -0.26); //Opposite side
+            }
+        })
+
+        // cardsToAdd: Array
+        scene.socket.on('dealOneCardInScene', (socketId, cardsToAdd, cardIndex) => {
+            if (socketId === scene.socket.id) {
+                let card;
+                if(cardsToAdd[0].includes("I")) {
+                    card = scene.DeckHandler.InstantiateCard(55 + (cardIndex * 55), 760, "ICard", cardsToAdd[0], "playerCard").setScale(0.26);
+                }
+                if(cardsToAdd[0].includes("H")) {
+                    card = scene.DeckHandler.InstantiateCard(55 + (cardIndex * 55), 760, "HCard", cardsToAdd[0], "playerCard").setScale(0.26);
+                }
+                scene.GameHandler.playerHand.push(card);
             }
         })
 
@@ -148,31 +158,32 @@ export default class SocketHandler {
             }
         })
 
-        // Called in InteractiveHandler.js
+        // Called in server.js
         // Where does Player 2 cards display in Player 1 scene??
-        scene.socket.on('cardPlayed', (cardName, socketId, dropZoneName) => {
-            //console.log("cardName:", cardName);
-            //console.log("socketId:", socketId);
-            //console.log("dropZoneID:", dropZoneName);
+        scene.socket.on('cardPlayed', (cardName, socketId, dropZoneName, roomId, cardType) => {
+            console.log("cardName:", cardName);
+            console.log("socketId:", socketId);
+            console.log("dropZoneID:", dropZoneName);
+            console.log("cardType: " + cardType);
             if (socketId !== scene.socket.id) {
                 scene.GameHandler.opponentHand.shift().destroy();
                 switch(dropZoneName) {
                     case "dropZone1": //天
-                        scene.DeckHandler.InstantiateCard(189, 345, "ICard", cardName, "opponentCard").setScale(0.26, -0.26);
+                        scene.DeckHandler.InstantiateCard(189, 345, cardType, cardName, "opponentCard").setScale(0.26, -0.26);
                         break;
                     case "dropZone2": //地
-                        scene.DeckHandler.InstantiateCard(90, 220, "ICard", cardName, "opponentCard").setScale(0.26, -0.26);
+                        scene.DeckHandler.InstantiateCard(90, 220, cardType, cardName, "opponentCard").setScale(0.26, -0.26);
                         break;
                     case "dropZone3": //人
-                        scene.DeckHandler.InstantiateCard(280, 220, "ICard", cardName, "opponentCard").setScale(0.26, -0.26);
+                        scene.DeckHandler.InstantiateCard(280, 220, cardType, cardName, "opponentCard").setScale(0.26, -0.26);
                         break;
                     case "dropZone4": //日
-                        scene.DeckHandler.InstantiateCard(189, 100, "HCard", cardName, "opponentCard").setScale(0.26, -0.26);
+                        scene.DeckHandler.InstantiateCard(189, 100, cardType, cardName, "opponentCard").setScale(0.26, -0.26);
                         break;
                 }
             }
         })
-        scene.socket.on('calculatePoints', (pointsString, socketId, dropZoneName) => {
+        scene.socket.on('calculatePoints', (pointsString, socketId, dropZoneName, roomId, cardType) => {
             let points = parseInt(pointsString);
             if (socketId === scene.socket.id) {
                 switch(dropZoneName) {
@@ -180,7 +191,7 @@ export default class SocketHandler {
                         scene.GameHandler.setPlayerSkyPoint(points);
                         break;
                     case "dropZone2": //地
-                        scene.GameHandler.setPlayerGroundPoint(points);
+                        scene.GameHandler.setPlayerGroundPoint(points); 
                         break;
                     case "dropZone3": //人
                         scene.GameHandler.setPlayerPersonPoint(points);
