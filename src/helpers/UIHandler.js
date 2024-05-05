@@ -115,7 +115,7 @@ export default class UIHandler {
         }
 
         this.BuildCreateRoomText = () => { 
-            scene.createRoomText = scene.add.text(350, 500, "建立房間", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+            scene.createRoomText = scene.add.text(260, 380, "建立房間", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
             scene.createRoomText.setInteractive();
 
             scene.createRoomText.on('pointerdown', () => {
@@ -126,6 +126,9 @@ export default class UIHandler {
                 scene.joinRoomText.visible = false;
                 scene.GameHandler.currentRoomID = randomRoomId;
                 scene.roomNumberText.text = "房間編號: " + randomRoomId;
+
+                this.inputText.visible = false;
+                this.HideInputTextDecation();
             })
             // Card color
             scene.createRoomText.on('pointerover', () => {
@@ -145,15 +148,20 @@ export default class UIHandler {
             scene.GameHandler.currentRoomID = scene.UIHandler.GetInputTextContent(scene.UIHandler.inputText);
             console.log("Current Room ID: " + scene.GameHandler.currentRoomID);
             scene.socket.emit('dealDeck', scene.socket.id, scene.GameHandler.currentRoomID);
+
+            scene.createRoomText.visible = false;
+            scene.joinRoomText.visible = false;
+            this.inputText.destroy();
+            this.HideInputTextDecation();
         });
         
         this.BuildJoinRoomText = () => { 
-            scene.joinRoomText = scene.add.text(350, 550, "加入房間", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+            scene.joinRoomText = scene.add.text(260, 430, "加入房間", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
             scene.joinRoomText.setInteractive();
             scene.joinRoomText.on('pointerdown', () => {
                 scene.socket.emit('joinRoom', scene.UIHandler.GetInputTextContent(scene.UIHandler.inputText));
                 
-                // (Runs joinRoomSucceedSignal if success.)
+                // (Runs joinRoomSucceedSignal from server.js if success.)
             })
             // Card color
             scene.joinRoomText.on('pointerover', () => {
@@ -162,6 +170,27 @@ export default class UIHandler {
             scene.joinRoomText.on('pointerout', () => {
                 scene.joinRoomText.setColor('#00ffff');
             })
+        }
+
+        this.BuildWhoWinText = (player1Score, player2Score, socketID) => {
+            if (socketID === scene.socket.id) {
+                if(player1Score > player2Score) {
+                    scene.whoWinText = scene.add.text(350, 450, "玩家1勝利!", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+                } else if (player1Score < player2Score){ 
+                    scene.whoWinText = scene.add.text(350, 450, "玩家2勝利!", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+                } else {
+                    scene.whoWinText = scene.add.text(350, 450, "平手!", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+                }
+            }
+            else {
+                if(player1Score < player2Score) {
+                    scene.whoWinText = scene.add.text(350, 450, "玩家1勝利!", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+                } else if (player1Score > player2Score){ 
+                    scene.whoWinText = scene.add.text(350, 450, "玩家2勝利!", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+                } else {
+                    scene.whoWinText = scene.add.text(350, 450, "平手!", { fontSize: 20, fontFamily: "Trebuchet MS", color: "#00ffff" });
+                }
+            }
             
         }
 
@@ -177,14 +206,15 @@ export default class UIHandler {
         }
 
         this.BuildLobby = () => {
+            this.BuildInputTextDecation();
             this.BuildRoomNumberText();
             this.BuildCreateRoomText();
             this.BuildJoinRoomText();
         }
         // Main
-        this.BuildRoomNumberFieldDecoration = (inputText) => { 
-            scene.rexUI.add.roundRectangle(400, 600, 100, 30, 0, 0x666666);
-            inputText = scene.add.text(430, 610, '', { fixedWidth: 150, fixedHeight: 36 });
+        this.BuildInputTextField = (inputText) => { 
+            
+            inputText = scene.add.text(330, 510, '', { fixedWidth: 150, fixedHeight: 36 });
             inputText.setOrigin(0.5, 0.5);
             inputText.setInteractive().on('pointerdown', () => {
                 const editor = scene.rexUI.edit(inputText);
@@ -197,8 +227,15 @@ export default class UIHandler {
             return inputText.text;
         }
 
+        this.BuildInputTextDecation = () => {
+            scene.inputTextRectangle = scene.rexUI.add.roundRectangle(300, 500, 100, 30, 0, 0x666666);
+        }
+        this.HideInputTextDecation = () => {
+            scene.inputTextRectangle.setFillStyle(0x000000); 
+        }
+
         // const textMessage = getTextContent(inputText);
-        // console.log(textMessage); // Output: "123456"
+        // console.log(textMessage); // Output: "123456" 
 
         // this.getTextContent = (textObject) => {
         //     return textObject.text;

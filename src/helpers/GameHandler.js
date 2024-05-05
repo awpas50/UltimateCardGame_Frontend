@@ -13,6 +13,11 @@ export default class GameHandler {
         this.playerHand = [];
         this.opponentHand = [];
 
+        this.skyCardZoneName = "";
+        this.groundCardZoneName = "";
+        this.personCardZoneName = "";
+        this.sunCardZoneName = "";
+
         //稀有度
         this.playerAuthorRarity = 1;
         this.opponentAuthorRarity = 1;
@@ -37,12 +42,15 @@ export default class GameHandler {
         this.opponentTotalPoints = 0;
 
         //總分
-        this.playerTotalGameScore = 0;
-        this.opponentTotalGameScore = 0;
+        this.playerTotalWinScore = 0;
+        this.opponentTotalWinScore = 0;
 
-        //擲骰子
+        //擲骰
         this.playerDiceValue = 0;
         this.opponentDiceValue = 0;
+
+        //基礎分數:8張卡,8分
+        this.baseTotalScoreWillGet = 8;
 
         this.setAuthorElements = (authorCardName) => {
             this.playerSkyElements = WCard_Data_23246[authorCardName].sky;
@@ -111,5 +119,15 @@ export default class GameHandler {
         this.getPlayerTotalPoint = () => {
             return this.playerTotalPoints;
         }
+
+        this.setPlayerTotalWinScore = () => {
+            let multiplier = 1;
+            this.playerTotalWinScore = this.baseTotalScoreWillGet * multiplier;
+            console.log("Player Win Score: " + this.playerTotalWinScore + " " + "Opponent Win Score: " + this.opponentTotalWinScore);
+        }
+        this.setOpponentTotalWinScore = () => {
+            this.opponentTotalWinScore = this.opponentSkyPoint + this.opponentGroundPoint + this.opponentPersonPoint;
+            console.log("Player Win Score: " + this.playerTotalWinScore + " " + "Opponent Win Score: " + this.opponentTotalWinScore);
+        } 
     }
 }
